@@ -1,6 +1,6 @@
 ---
 name: boy-scout
-description: Use when fixing, editing, changing, debugging, or working with any Python code. Applies the Boy Scout Rule—always leave code cleaner than you found it. Orchestrates other clean code skills as needed.
+description: Use when fixing, editing, changing, debugging, or working with any TypeScript code. Applies the Boy Scout Rule—always leave code cleaner than you found it. Orchestrates other clean code skills as needed.
 ---
 
 # The Boy Scout Rule
@@ -39,38 +39,42 @@ Every time you touch code, look for **at least one small improvement**:
 
 ## The Rule in Practice
 
-```python
-# You're asked to fix a bug in this function:
-def proc(d, x, flag=False):
-    # process data
-    for i in d:
-        if i > 0:
-            if flag:
-                x.append(i * 1.0825)  # tax
-            else:
-                x.append(i)
-    return x
+```typescript
+// You're asked to fix a bug in this function:
+function proc(d: number[], x: number[], flag = false): number[] {
+  // process data
+  for (const i of d) {
+    if (i > 0) {
+      if (flag) {
+        x.push(i * 1.0825); // tax
+      } else {
+        x.push(i);
+      }
+    }
+  }
+  return x;
+}
 
-# Don't just fix the bug and leave.
-# Leave it cleaner:
-TAX_RATE = 0.0825
+// Don't just fix the bug and leave.
+// Leave it cleaner:
+const TAX_RATE = 0.0825;
 
-def process_positive_values(
-    values: list[float],
-    apply_tax: bool = False
-) -> list[float]:
-    """Filter positive values, optionally applying tax."""
-    rate = 1 + TAX_RATE if apply_tax else 1
-    return [v * rate for v in values if v > 0]
+function processPositiveValues(
+  values: number[],
+  applyTax = false
+): number[] {
+  const multiplier = applyTax ? 1 + TAX_RATE : 1;
+  return values.filter((v) => v > 0).map((v) => v * multiplier);
+}
 ```
 
 **What changed:**
 - ✅ Descriptive function name (N1)
 - ✅ Clear parameter names (N1)
-- ✅ Type hints (P3)
+- ✅ Explicit types (P3)
 - ✅ Named constant for magic number (G25)
 - ✅ No output argument mutation (F2)
-- ✅ Useful docstring (C4)
+- ✅ JSDoc if the public API needs it (C4)
 
 ## Skill Orchestration
 
@@ -78,7 +82,7 @@ This skill coordinates with specialized skills based on what you're doing:
 
 | Task | Trigger Skill |
 |------|---------------|
-| Writing/reviewing any Python | `python-clean-code` (master) |
+| Writing/reviewing any TypeScript | `typescript-clean-code` (master) |
 | Naming variables, functions, classes | `clean-names` |
 | Writing or editing comments | `clean-comments` |
 | Creating or refactoring functions | `clean-functions` |
@@ -108,7 +112,7 @@ When working on code:
 4. Note the improvement made (e.g., "Also cleaned up: renamed `x` to `results` for clarity")
 
 When reviewing code:
-1. Load `python-clean-code` for comprehensive rule checking
+1. Load `typescript-clean-code` for comprehensive rule checking
 2. Flag violations by rule number
 3. Suggest incremental improvements, not complete rewrites
 

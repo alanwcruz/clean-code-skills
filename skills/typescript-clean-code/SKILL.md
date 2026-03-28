@@ -1,11 +1,11 @@
 ---
-name: python-clean-code
-description: Use when writing, fixing, editing, reviewing, or refactoring any Python code. Enforces Robert Martin's complete Clean Code catalog—naming, functions, comments, DRY, and boundary conditions.
+name: typescript-clean-code
+description: Use when writing, fixing, editing, reviewing, or refactoring any TypeScript code. Enforces Robert Martin's complete Clean Code catalog—naming, functions, comments, DRY, and boundary conditions.
 ---
 
-# Clean Python: Complete Reference
+# Clean TypeScript: Complete Reference
 
-Enforces all Clean Code principles from Robert C. Martin's Chapter 17, adapted for Python.
+Enforces all Clean Code principles from Robert C. Martin's Chapter 17, adapted for TypeScript.
 
 ## Comments (C1-C5)
 - C1: No metadata in comments (use Git)
@@ -15,12 +15,12 @@ Enforces all Clean Code principles from Robert C. Martin's Chapter 17, adapted f
 - C5: Never commit commented-out code
 
 ## Environment (E1-E2)
-- E1: One command to build (`pip install -e ".[dev]"`)
-- E2: One command to test (`pytest`)
+- E1: One command to build (`npm install` then `npm run build` — match your repo's scripts)
+- E2: One command to test (`npm test` or e.g. `vitest run` — match your repo's scripts)
 
 ## Functions (F1-F4)
-- F1: Maximum 3 arguments (use dataclasses for more)
-- F2: No output arguments (return values)
+- F1: Maximum 3 arguments (use a typed options object or small `interface`/`type` for more)
+- F2: No output arguments (return values; avoid mutating parameters)
 - F3: No flag arguments (split functions)
 - F4: Delete dead functions
 
@@ -48,7 +48,7 @@ Enforces all Clean Code principles from Robert C. Martin's Chapter 17, adapted f
 - G21: Understand the algorithm
 - G22: Make dependencies physical
 - G23: Prefer polymorphism to if/else
-- G24: Follow conventions (PEP 8)
+- G24: Follow conventions (ESLint, Prettier, strict `tsconfig`)
 - G25: Named constants, not magic numbers
 - G26: Be precise
 - G27: Structure over convention
@@ -62,11 +62,11 @@ Enforces all Clean Code principles from Robert C. Martin's Chapter 17, adapted f
 - G35: Config at high levels
 - G36: Law of Demeter (no train wrecks)
 
-## Python-Specific (P1-P3)
-These adapt the Java-specific rules (J1-J3) to Python conventions:
-- P1: No wildcard imports (`from x import *`) — opposite of Java, per PEP 8
-- P2: Use Enums, not magic constants — same principle as J3
-- P3: Type hints on public interfaces — Python's equivalent of Java's static typing
+## TypeScript-Specific (P1-P3)
+These adapt the Java-specific rules (J1-J3) to TypeScript conventions:
+- P1: Explicit module boundaries — prefer named imports; avoid careless `import *` / `export *` that hide the public API or encourage barrel-file cycles
+- P2: No magic constants for domain states — use `as const` objects, string literal unions, or enums per team style
+- P3: Typed public surface — exported APIs must not rely on implicit `any`; prefer `unknown` and narrowing at boundaries
 
 ## Names (N1-N7)
 - N1: Choose descriptive names
@@ -116,11 +116,11 @@ These adapt the Java-specific rules (J1-J3) to Python conventions:
 |----------|-------|
 | Comment every line | Delete obvious comments |
 | Helper for one-liner | Inline the code |
-| `from x import *` | Explicit imports |
-| Magic number `86400` | `SECONDS_PER_DAY = 86400` |
-| `process(data, True)` | `process_verbose(data)` |
+| `import * as x from './ huge-barrel'` | Named imports from stable modules |
+| Magic number `86400` | `const SECONDS_PER_DAY = 86400` |
+| `process(data, true)` | `processVerbose(data)` |
 | Deep nesting | Guard clauses, early returns |
-| `obj.a.b.c.value` | `obj.get_value()` |
+| `obj.a.b.c.value` | `obj.getValue()` |
 | 100+ line function | Split by responsibility |
 
 ## AI Behavior

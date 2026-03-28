@@ -1,6 +1,6 @@
 ---
 name: clean-general
-description: Use when writing, fixing, editing, or reviewing Python code quality. Enforces Clean Code's core principles—DRY, single responsibility, clear intent, no magic numbers, proper abstractions.
+description: Use when writing, fixing, editing, or reviewing TypeScript code quality. Enforces Clean Code's core principles—DRY, single responsibility, clear intent, no magic numbers, proper abstractions.
 ---
 
 # General Clean Code Principles
@@ -11,64 +11,88 @@ description: Use when writing, fixing, editing, or reviewing Python code quality
 
 Every piece of knowledge has one authoritative representation.
 
-```python
-# Bad - duplication
-tax_rate = 0.0825
-ca_total = subtotal * 1.0825
-ny_total = subtotal * 1.07
+```typescript
+// Bad - duplication
+const taxRate = 0.0825;
+const caTotal = subtotal * 1.0825;
+const nyTotal = subtotal * 1.07;
 
-# Good - single source of truth
-TAX_RATES = {"CA": 0.0825, "NY": 0.07}
-def calculate_total(subtotal: float, state: str) -> float:
-    return subtotal * (1 + TAX_RATES[state])
+// Good - single source of truth
+const TAX_RATES: Record<string, number> = { CA: 0.0825, NY: 0.07 };
+function calculateTotal(subtotal: number, state: string): number {
+  return subtotal * (1 + TAX_RATES[state]);
+}
 ```
 
 **G16: No Obscured Intent**
 
 Don't be clever. Be clear.
 
-```python
-# Bad - what does this do?
-return (x & 0x0F) << 4 | (y & 0x0F)
+```typescript
+// Bad - what does this do?
+return ((x & 0x0f) << 4) | (y & 0x0f);
 
-# Good - obvious intent
-return pack_coordinates(x, y)
+// Good - obvious intent
+return packCoordinates(x, y);
 ```
 
 **G23: Prefer Polymorphism to If/Else**
 
-```python
-# Bad - will grow forever
-def calculate_pay(employee):
-    if employee.type == "SALARIED":
-        return employee.salary
-    elif employee.type == "HOURLY":
-        return employee.hours * employee.rate
-    elif employee.type == "COMMISSIONED":
-        return employee.base + employee.commission
+```typescript
+// Bad - will grow forever
+type EmployeeType = 'SALARIED' | 'HOURLY' | 'COMMISSIONED';
+interface EmployeeRow {
+  type: EmployeeType;
+  salary?: number;
+  hours?: number;
+  rate?: number;
+  base?: number;
+  commission?: number;
+}
+function calculatePay(employee: EmployeeRow): number {
+  if (employee.type === 'SALARIED') return employee.salary ?? 0;
+  if (employee.type === 'HOURLY')
+    return (employee.hours ?? 0) * (employee.rate ?? 0);
+  return (employee.base ?? 0) + (employee.commission ?? 0);
+}
 
-# Good - open/closed principle
-class SalariedEmployee:
-    def calculate_pay(self): return self.salary
-
-class HourlyEmployee:
-    def calculate_pay(self): return self.hours * self.rate
-
-class CommissionedEmployee:
-    def calculate_pay(self): return self.base + self.commission
+// Good - open/closed principle
+interface Employee {
+  calculatePay(): number;
+}
+class SalariedEmployee implements Employee {
+  constructor(private salary: number) {}
+  calculatePay(): number {
+    return this.salary;
+  }
+}
+class HourlyEmployee implements Employee {
+  constructor(private hours: number, private rate: number) {}
+  calculatePay(): number {
+    return this.hours * this.rate;
+  }
+}
+class CommissionedEmployee implements Employee {
+  constructor(private base: number, private commission: number) {}
+  calculatePay(): number {
+    return this.base + this.commission;
+  }
+}
 ```
 
 **G25: Replace Magic Numbers with Named Constants**
 
-```python
-# Bad
-if elapsed_time > 86400:
-    ...
+```typescript
+// Bad
+if (elapsedTime > 86400) {
+  // ...
+}
 
-# Good
-SECONDS_PER_DAY = 86400
-if elapsed_time > SECONDS_PER_DAY:
-    ...
+// Good
+const SECONDS_PER_DAY = 86400;
+if (elapsedTime > SECONDS_PER_DAY) {
+  // ...
+}
 ```
 
 **G30: Functions Should Do One Thing**
@@ -77,12 +101,12 @@ If you can extract another function, your function does more than one thing.
 
 **G36: Law of Demeter (Avoid Train Wrecks)**
 
-```python
-# Bad - reaching through multiple objects
-output_dir = context.options.scratch_dir.absolute_path
+```typescript
+// Bad - reaching through multiple objects
+const outputDir = context.options.scratchDir.absolutePath;
 
-# Good - one dot
-output_dir = context.get_scratch_dir()
+// Good - one dot (or explicit query)
+const outputDir = context.getScratchDir();
 ```
 
 ## Enforcement Checklist

@@ -1,6 +1,6 @@
 ---
 name: clean-tests
-description: Use when writing, fixing, editing, or refactoring Python tests. Enforces Clean Code principles—fast tests, boundary coverage, one assert per test.
+description: Use when writing, fixing, editing, or refactoring TypeScript tests. Enforces Clean Code principles—fast tests, boundary coverage, one assert per test.
 ---
 
 # Clean Tests
@@ -9,21 +9,31 @@ description: Use when writing, fixing, editing, or refactoring Python tests. Enf
 
 Test everything that could possibly break. Use coverage tools as a guide, not a goal.
 
-```python
-# Bad - only tests happy path
-def test_divide():
-    assert divide(10, 2) == 5
+```typescript
+import { describe, it, expect } from 'vitest';
+import { divide } from './math';
 
-# Good - tests edge cases too
-def test_divide_normal():
-    assert divide(10, 2) == 5
+// Bad - only tests happy path
+describe('divide', () => {
+  it('works', () => {
+    expect(divide(10, 2)).toBe(5);
+  });
+});
 
-def test_divide_by_zero():
-    with pytest.raises(ZeroDivisionError):
-        divide(10, 0)
+// Good - tests edge cases too
+describe('divide', () => {
+  it('divides normally', () => {
+    expect(divide(10, 2)).toBe(5);
+  });
 
-def test_divide_negative():
-    assert divide(-10, 2) == -5
+  it('throws on divide by zero', () => {
+    expect(() => divide(10, 0)).toThrow(/zero/i);
+  });
+
+  it('handles negative dividend', () => {
+    expect(divide(-10, 2)).toBe(-5);
+  });
+});
 ```
 
 ## T2: Use a Coverage Tool
@@ -31,113 +41,132 @@ def test_divide_negative():
 Coverage tools report gaps in your testing strategy. Don't ignore them.
 
 ```bash
-# Run with coverage
-pytest --cov=myproject --cov-report=term-missing
-
-# Aim for meaningful coverage, not 100%
+# Examples — use whatever your project configures
+vitest run --coverage
+# or
+npm test -- --coverage
 ```
 
 ## T3: Don't Skip Trivial Tests
 
 Trivial tests document behavior and catch regressions. They're worth more than their cost.
 
-```python
-# Worth having - documents expected behavior
-def test_user_default_role():
-    user = User(name="Alice")
-    assert user.role == "member"
+```typescript
+// Worth having - documents expected behavior
+it('defaults new user role to member', () => {
+  const user = new User({ name: 'Alice' });
+  expect(user.role).toBe('member');
+});
 ```
 
 ## T4: An Ignored Test Is a Question About an Ambiguity
 
-Don't use `@pytest.mark.skip` to hide problems. Either fix the test or delete it.
+Don't use `it.skip` / `test.skip` to hide problems. Either fix the test or delete it.
 
-```python
-# Bad - hiding a problem
-@pytest.mark.skip(reason="flaky, fix later")
-def test_async_operation():
-    ...
+```typescript
+// Bad - hiding a problem
+it.skip('flaky async operation', async () => {
+  // ...
+});
 
-# Good - either fix it or document why it's skipped
-@pytest.mark.skip(reason="Requires Redis, see CONTRIBUTING.md for setup")
-def test_cache_invalidation():
-    ...
+// Good - either fix it or document why it's skipped
+it.skip('requires Redis; see CONTRIBUTING.md for setup', async () => {
+  // ...
+});
 ```
 
 ## T5: Test Boundary Conditions
 
 Bugs congregate at boundaries. Test them explicitly.
 
-```python
-def test_pagination_boundaries():
-    items = list(range(100))
-    
-    # First page
-    assert paginate(items, page=1, size=10) == items[0:10]
-    
-    # Last page
-    assert paginate(items, page=10, size=10) == items[90:100]
-    
-    # Beyond last page
-    assert paginate(items, page=11, size=10) == []
-    
-    # Page zero (invalid)
-    with pytest.raises(ValueError):
-        paginate(items, page=0, size=10)
-    
-    # Empty list
-    assert paginate([], page=1, size=10) == []
+```typescript
+describe('paginate', () => {
+  const items = Array.from({ length: 100 }, (_, i) => i);
+
+  it('returns first page', () => {
+    expect(paginate(items, { page: 1, size: 10 })).toEqual(items.slice(0, 10));
+  });
+
+  it('returns last full page', () => {
+    expect(paginate(items, { page: 10, size: 10 })).toEqual(items.slice(90, 100));
+  });
+
+  it('returns empty beyond last page', () => {
+    expect(paginate(items, { page: 11, size: 10 })).toEqual([]);
+  });
+
+  it('rejects page zero', () => {
+    expect(() => paginate(items, { page: 0, size: 10 })).toThrow(RangeError);
+  });
+
+  it('handles empty list', () => {
+    expect(paginate([], { page: 1, size: 10 })).toEqual([]);
+  });
+});
 ```
 
 ## T6: Exhaustively Test Near Bugs
 
 When you find a bug, write tests for all similar cases. Bugs cluster.
 
-```python
-# Found bug: off-by-one in date calculation
-# Now test ALL date boundaries
-def test_month_boundaries():
-    assert last_day_of_month(2024, 1) == 31  # January
-    assert last_day_of_month(2024, 2) == 29  # Leap year February
-    assert last_day_of_month(2023, 2) == 28  # Non-leap February
-    assert last_day_of_month(2024, 4) == 30  # 30-day month
-    assert last_day_of_month(2024, 12) == 31 # December
+```typescript
+// Found bug: off-by-one in date calculation
+// Now test ALL date boundaries
+describe('lastDayOfMonth', () => {
+  it('January has 31 days', () => {
+    expect(lastDayOfMonth(2024, 1)).toBe(31);
+  });
+  it('February leap year', () => {
+    expect(lastDayOfMonth(2024, 2)).toBe(29);
+  });
+  it('February non-leap year', () => {
+    expect(lastDayOfMonth(2023, 2)).toBe(28);
+  });
+  it('April has 30 days', () => {
+    expect(lastDayOfMonth(2024, 4)).toBe(30);
+  });
+  it('December has 31 days', () => {
+    expect(lastDayOfMonth(2024, 12)).toBe(31);
+  });
+});
 ```
 
 ## T7: Patterns of Failure Are Revealing
 
 When tests fail, look for patterns. They often point to deeper issues.
 
-```python
-# If all async tests fail intermittently,
-# the problem isn't the tests—it's the async handling
+```typescript
+// If all async tests fail intermittently,
+// the problem isn't the tests—it's the async handling
 ```
 
 ## T8: Test Coverage Patterns Can Be Revealing
 
 Look at which code paths are untested. Often they reveal design problems.
 
-```python
-# If you can't easily test a function, it probably does too much
-# Refactor for testability
+```typescript
+// If you can't easily test a function, it probably does too much
+// Refactor for testability
 ```
 
 ## T9: Tests Should Be Fast
 
 Slow tests don't get run. Keep unit tests under 100ms each.
 
-```python
-# Bad - hits real database
-def test_user_creation():
-    db = connect_to_database()  # Slow!
-    user = db.create_user("Alice")
-    assert user.name == "Alice"
+```typescript
+// Bad - hits real database
+it('creates user', async () => {
+  const db = await connectToDatabase(); // Slow!
+  const user = await db.createUser('Alice');
+  expect(user.name).toBe('Alice');
+});
 
-# Good - uses mock or in-memory
-def test_user_creation():
-    db = InMemoryDatabase()
-    user = db.create_user("Alice")
-    assert user.name == "Alice"
+// Good - uses mock or in-memory
+it('creates user', () => {
+  const db = new InMemoryDatabase();
+  const user = db.createUser('Alice');
+  expect(user.name).toBe('Alice');
+});
 ```
 
 ## Test Organization
@@ -152,33 +181,38 @@ def test_user_creation():
 
 ### One Concept Per Test
 
-```python
-# Bad - testing multiple things
-def test_user():
-    user = User("Alice", "alice@example.com")
-    assert user.name == "Alice"
-    assert user.email == "alice@example.com"
-    assert user.is_valid()
-    user.activate()
-    assert user.is_active
+```typescript
+// Bad - testing multiple things
+it('user', () => {
+  const user = new User({ name: 'Alice', email: 'alice@example.com' });
+  expect(user.name).toBe('Alice');
+  expect(user.email).toBe('alice@example.com');
+  expect(user.isValid()).toBe(true);
+  user.activate();
+  expect(user.isActive).toBe(true);
+});
 
-# Good - one concept each
-def test_user_stores_name():
-    user = User("Alice", "alice@example.com")
-    assert user.name == "Alice"
+// Good - one concept each
+it('stores name', () => {
+  const user = new User({ name: 'Alice', email: 'alice@example.com' });
+  expect(user.name).toBe('Alice');
+});
 
-def test_user_stores_email():
-    user = User("Alice", "alice@example.com")
-    assert user.email == "alice@example.com"
+it('stores email', () => {
+  const user = new User({ name: 'Alice', email: 'alice@example.com' });
+  expect(user.email).toBe('alice@example.com');
+});
 
-def test_new_user_is_valid():
-    user = User("Alice", "alice@example.com")
-    assert user.is_valid()
+it('new user is valid', () => {
+  const user = new User({ name: 'Alice', email: 'alice@example.com' });
+  expect(user.isValid()).toBe(true);
+});
 
-def test_user_can_be_activated():
-    user = User("Alice", "alice@example.com")
-    user.activate()
-    assert user.is_active
+it('can be activated', () => {
+  const user = new User({ name: 'Alice', email: 'alice@example.com' });
+  user.activate();
+  expect(user.isActive).toBe(true);
+});
 ```
 
 ## Quick Reference

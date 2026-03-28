@@ -5,7 +5,9 @@
 
 **Teach your AI to write code that doesn't suck.**
 
-This repository contains [Agent Skills](https://agentskills.io) that enforce Robert C. Martin's *Clean Code* principles. They work with Google Antigravity, Anthropic's Claude Code, and any agent that supports the Agent Skills standard.
+This repository contains [Agent Skills](https://agentskills.io) that enforce Robert C. Martin's *Clean Code* principles for **TypeScript**. They work with **Cursor**, Google Antigravity, Anthropic's Claude Code, and any agent that supports the Agent Skills standard.
+
+This copy is maintained on GitHub as **[alanwcruz/clean-code-skills](https://github.com/alanwcruz/clean-code-skills)**, a fork of **[ertugrul-dmr/clean-code-skills](https://github.com/ertugrul-dmr/clean-code-skills)**. For local `git` remotes and syncing from the original repo, see [Fork and remotes](#fork-and-remotes).
 
 ## Why?
 
@@ -22,7 +24,7 @@ These skills encode battle-tested solutions to exactly these problems—directly
 | Skill | Description | Rules |
 |-------|-------------|-------|
 | `boy-scout` | **Orchestrator**—always leave code cleaner than you found it | Coordinates all skills |
-| `python-clean-code` | **Master skill** with all 66 rules | C1-C5, E1-E2, F1-F4, G1-G36, N1-N7, P1-P3, T1-T9 |
+| `typescript-clean-code` | **Master skill** with all 66 rules | C1-C5, E1-E2, F1-F4, G1-G36, N1-N7, P1-P3, T1-T9 |
 | `clean-comments` | Minimal, accurate commenting | C1-C5 |
 | `clean-functions` | Small, focused, obvious functions | F1-F4 |
 | `clean-general` | Core principles (DRY, single responsibility) | G5, G16, G23, G25, G30, G36 |
@@ -95,6 +97,40 @@ cp -r /tmp/clean-code-skills/skills/* ~/.claude/skills/ && \
 rm -rf /tmp/clean-code-skills
 ```
 
+### Cursor
+
+Cursor discovers skills automatically from [skill directories](https://cursor.com/docs/context/skills). Each skill is a folder (name must match the `name` field in `SKILL.md`) containing `SKILL.md`.
+
+**Project-specific** (applies to one workspace):
+
+```bash
+# From this repository's root (copies into .cursor/skills here or adjust paths for your workspace)
+mkdir -p .cursor/skills
+cp -r skills/* .cursor/skills/
+```
+
+**Global** (applies to all projects):
+
+```bash
+mkdir -p ~/.cursor/skills
+cp -r skills/* ~/.cursor/skills/
+```
+
+**Quick install** (global, one command):
+
+```bash
+git clone https://github.com/ertugrul-dmr/clean-code-skills.git /tmp/clean-code-skills && \
+mkdir -p ~/.cursor/skills && \
+cp -r /tmp/clean-code-skills/skills/* ~/.cursor/skills/ && \
+rm -rf /tmp/clean-code-skills
+```
+
+Cursor also loads project skills from `.agents/skills/` and, for compatibility, from `.claude/skills/` and `.codex/skills/` (and the matching directories under `~`).
+
+**Using skills in Cursor**: Open **Settings → Rules** to see discovered skills under the Agent section. In Agent chat, type **`/`** and search for a skill name (e.g. `typescript-clean-code`) to attach it explicitly. By default, Cursor includes skills when their `description` matches your task.
+
+**Skills vs project rules**: These packages live under `.cursor/skills/`. [Cursor Rules](https://cursor.com/docs/context/rules) (`.cursor/rules/*.mdc`) are separate—use rules for always-on or glob-scoped policies; use skills for progressive, task-matched guidance like this set.
+
 ### Other Agent Skills-Compatible Tools
 
 The skills follow the [Agent Skills](https://agentskills.io) open standard. Check your tool's documentation for the skills directory location, then copy the `skills/` folder contents there.
@@ -113,52 +149,67 @@ Once installed, skills activate automatically based on context. Ask your agent t
 
 **Before** (10 violations):
 
-```python
-from utils import *  # P1
+```typescript
+import * as utils from './utils'; // P1
 
-# Author: John, Modified: 2024-01-15  # C1
-def proc(d, t, flag=False):  # N1, F1, F3
-    # Process the data  # C3
-    x = []  # N1
-    for i in d:
-        if flag:  # F3
-            if i['type'] == 'A':  # G23
-                x.append(i['val'] * 1.0825)  # G25
-            elif i['type'] == 'B':
-                x.append(i['val'] * 1.05)  # G25
-        else:
-            x.append(i['val'])
-    return x
+// Author: John, Modified: 2024-01-15  // C1
+export function proc(
+  d: { type: string; val: number }[],
+  t: number[],
+  flag = false // N1, F1, F3
+): number[] {
+  // Process the data  // C3
+  const x: number[] = []; // N1
+  for (const i of d) {
+    if (flag) {
+      // F3
+      if (i.type === 'A') {
+        // G23
+        x.push(i.val * 1.0825); // G25
+      } else if (i.type === 'B') {
+        x.push(i.val * 1.05); // G25
+      }
+    } else {
+      x.push(i.val);
+    }
+  }
+  return x;
+}
 ```
 
 **After** (with skills active):
 
-```python
-import json
-from dataclasses import dataclass
-from typing import Literal
+```typescript
+const TAX_RATE_CA = 0.0825;
+const TAX_RATE_NY = 0.05;
 
-TAX_RATE_CA = 0.0825
-TAX_RATE_NY = 0.05
-TransactionType = Literal['CA', 'NY']
+type TransactionType = 'CA' | 'NY';
 
-@dataclass
-class Transaction:
-    value: float
-    type: TransactionType
+interface Transaction {
+  value: number;
+  type: TransactionType;
+}
 
-def apply_tax(transaction: Transaction) -> float:
-    """Apply state-specific tax to transaction value."""
-    tax_rates = {'CA': TAX_RATE_CA, 'NY': TAX_RATE_NY}
-    return transaction.value * (1 + tax_rates[transaction.type])
+/** Apply state-specific tax to transaction value. */
+export function applyTax(transaction: Transaction): number {
+  const taxRates: Record<TransactionType, number> = {
+    CA: TAX_RATE_CA,
+    NY: TAX_RATE_NY,
+  };
+  return transaction.value * (1 + taxRates[transaction.type]);
+}
 
-def process_transactions_with_tax(transactions: list[Transaction]) -> list[float]:
-    """Calculate taxed values for all transactions."""
-    return [apply_tax(t) for t in transactions]
+export function processTransactionsWithTax(
+  transactions: Transaction[]
+): number[] {
+  return transactions.map((t) => applyTax(t));
+}
 
-def process_transactions_without_tax(transactions: list[Transaction]) -> list[float]:
-    """Extract raw values from all transactions."""
-    return [t.value for t in transactions]
+export function processTransactionsWithoutTax(
+  transactions: Transaction[]
+): number[] {
+  return transactions.map((t) => t.value);
+}
 ```
 
 ---
@@ -208,7 +259,7 @@ def process_transactions_without_tax(transactions: list[Transaction]) -> list[fl
 | G21 | Understand the algorithm |
 | G22 | Make dependencies physical |
 | G23 | Polymorphism over if/else |
-| G24 | Follow conventions (PEP 8) |
+| G24 | Follow conventions (ESLint, Prettier, strict `tsconfig`) |
 | G25 | Named constants, not magic numbers |
 | G26 | Be precise |
 | G27 | Structure over convention |
@@ -233,12 +284,12 @@ def process_transactions_without_tax(transactions: list[Transaction]) -> list[fl
 | N6 | No encodings (no Hungarian notation) |
 | N7 | Names describe side effects |
 
-### Python-Specific (P1-P3)
+### TypeScript-Specific (P1-P3)
 | Rule | Principle |
 |------|-----------|
-| P1 | No wildcard imports |
-| P2 | Use Enums, not magic constants |
-| P3 | Type hints on public interfaces |
+| P1 | Explicit module boundaries (named imports; avoid careless `import *` / `export *`) |
+| P2 | No magic domain constants (`as const`, unions, or enums per team style) |
+| P3 | Typed public surface (no implicit `any` on exports; `unknown` at boundaries) |
 
 ### Tests (T1-T9)
 | Rule | Principle |
@@ -275,7 +326,7 @@ Add your own rules by editing the `SKILL.md` files or creating new skill folders
 
 ```
 skills/
-├── python-clean-code/
+├── typescript-clean-code/
 │   └── SKILL.md
 ├── clean-comments/
 │   └── SKILL.md
@@ -288,10 +339,10 @@ skills/
 For stricter enforcement, add a `scripts/` folder with linters the agent can run:
 
 ```
-skills/python-clean-code/
+skills/typescript-clean-code/
 ├── SKILL.md
 └── scripts/
-    └── lint.py
+    └── check.sh            # e.g. npx eslint . && npx tsc --noEmit
 ```
 
 ---
@@ -310,9 +361,40 @@ This keeps the agent fast—it's not thinking about database migrations when you
 
 ## Contributing
 
+### Fork and remotes
+
+Use two remotes so you can pull from the original project and push to this fork:
+
+| Remote | Repository |
+|--------|------------|
+| `origin` | [github.com/alanwcruz/clean-code-skills](https://github.com/alanwcruz/clean-code-skills) (`https://github.com/alanwcruz/clean-code-skills.git`) |
+| `upstream` | [github.com/ertugrul-dmr/clean-code-skills](https://github.com/ertugrul-dmr/clean-code-skills) (`https://github.com/ertugrul-dmr/clean-code-skills.git`) |
+
+If you cloned this fork and only have `origin`, add the original:
+
+```bash
+git remote add upstream https://github.com/ertugrul-dmr/clean-code-skills.git
+```
+
+If you cloned the original first and want `origin` to point at this fork instead:
+
+```bash
+git remote rename origin upstream
+git remote add origin https://github.com/alanwcruz/clean-code-skills.git
+git branch --set-upstream-to=origin/main main
+```
+
+Sync changes from the original, then update the fork:
+
+```bash
+git fetch upstream
+git merge upstream/main   # or: git rebase upstream/main
+git push origin main
+```
+
 PRs welcome! Some ideas:
 
-- [ ] Additional language support (TypeScript, Go, Rust)
+- [ ] Additional language support (Python, Go, Rust)
 - [ ] Integration tests
 - [ ] Pre-commit hooks
 - [ ] IDE extensions
@@ -323,6 +405,7 @@ PRs welcome! Some ideas:
 
 - [*Clean Code*](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882) by Robert C. Martin
 - [Agent Skills Standard](https://agentskills.io)
+- [Cursor Agent Skills](https://cursor.com/docs/context/skills)
 - [Antigravity Documentation](https://developers.google.com/antigravity)
 - [Claude Code Documentation](https://docs.anthropic.com/claude-code)
 
